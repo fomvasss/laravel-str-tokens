@@ -1,0 +1,47 @@
+{
+    "name": "fomvasss/laravel-str-tokens",
+    "description": "A package to manage and generate string with tokens (for Eloquent Models)",
+    "type": "composer-package",
+    "keywords": ["token", "tag", "string", "laravel", "drupal"],
+    "homepage": "https://github.com/fomvasss/laravel-str-tokens",
+    "authors": [
+        {
+            "name": "Fomin Vasyl",
+            "email": "fomvasss@gmail.com",
+            "role": "Developer"
+        },
+        {
+            "name": "Klimovich Y",
+            "role": "Сonsultant"
+        },
+        {
+            "name": "Ogryzko D",
+            "role": "Сonsultant"
+        }
+    ],
+    "license": "MIT",
+    "require": {
+        "php" : ">=7.0.0",
+        "illuminate/support": "5.6.*|5.7.*",
+        "illuminate/view": "5.6.*|5.7.*",
+        "nesbot/carbon": "^1.25"
+    },
+    "autoload": {
+        "psr-4": {
+            "Fomvasss\\LaravelStrTokens\\": "src"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Fomvasss\\LaravelStrTokens\\ServiceProvider"
+            ],
+            "aliases": {
+                "StrToken": "Fomvasss\\LaravelStrTokens\\Facade"
+            }
+        }
+    }
+}
