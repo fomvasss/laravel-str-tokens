@@ -40,7 +40,7 @@
                 "Fomvasss\\LaravelStrTokens\\ServiceProvider"
             ],
             "aliases": {
-                "StrToken": "Fomvasss\\LaravelStrTokens\\Facade"
+                "StrToken": "Fomvasss\\LaravelStrTokens\\Facades\\StrToken"
             }
         }
     }

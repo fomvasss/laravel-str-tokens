@@ -10,6 +10,7 @@ namespace Fomvasss\LaravelStrTokens;
 
 use App\Models\MetaTag;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
  
 class StrTokenGenerator
@@ -108,6 +109,11 @@ class StrTokenGenerator
 
             } elseif ($this->entity && strtolower($key) === snake_case(class_basename($this->entity))) {
                 $replacements += $this->eloquentModelTokens($attributes, $key);
+
+            // For related taxonomy: https://github.com/fomvasss/laravel-taxonomy
+            // and you set preffix in your relation methods - "tx"
+            } elseif ($this->entity && substr($key, 0, 2) === 'tx') {
+                $replacements += $this->eloquentModelTokens($attributes, $key);
             }
 
             if ($this->clearEmptyTokens) {
@@ -169,19 +175,24 @@ class StrTokenGenerator
             $function = explode(':', $key)[0];
             $strTokenMethod = camel_case('str_token_'.$function);
 
-            // is token generate method
+            // Exists token generate method (defined user)
             if (method_exists($this->entity, $strTokenMethod)) {
 
                 $replacements[$original] = $this->entity->{$strTokenMethod}($this->entity, ...explode(':', $key));
-                // is relation function
+
+            // Exists relation function (defined user)
             } elseif (method_exists($this->entity, $function)) {
 
                 $newOriginal = str_replace("$type:", '', $original);
 
                 if ($this->entity->{$function} instanceof Model) {
-                    $tm = new self();
+                    $tm = new static();
 
                     $replacements[$original] = $tm->setText($newOriginal)->setEntity($this->entity->{$function})->replace();
+                } elseif ($this->entity->{$function} instanceof Collection && ($firstRelatedEntity = $this->entity->{$function}->first())) {
+                    $tm = new static();
+
+                    $replacements[$original] = $tm->setText($newOriginal)->setEntity($firstRelatedEntity)->replace();
                 }
                 // is field model
             } else {

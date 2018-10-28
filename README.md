@@ -25,7 +25,7 @@ Run this on the command line:
 ```
 php artisan vendor:publish --provider="Fomvasss\LaravelStrTokens\ServiceProvider"
 ```
-- A configuration file will be publish to `config/str-tokens.php`.
+- A configuration file will be publish to `config/str-tokens.php`
 
 
 ## Examples usage
@@ -37,14 +37,15 @@ php artisan vendor:publish --provider="Fomvasss\LaravelStrTokens\ServiceProvider
 
 namespace App\Http\Controllers;
 
-use StrToken;
+use Fomvasss\LaravelStrTokens\Facades\StrToken;
+use Illuminate\Http\Request;
 
 class HomeController extends Controller 
 {
     
     public function store(Request $request)
     {
-        $title = \StrToken::setText($request->title.' [user:name], [date:date]')
+        $title = StrToken::setText($request->title.' [user:name], [date:date]')
             ->setEntity(\Auth::user())
             ->replace();
         $article = \App\Model\Article::create([
@@ -59,10 +60,13 @@ class HomeController extends Controller
     {
         $article = \App\Model\Article::findOrFail($id);
         
-        $str = \StrToken::setText('
-                Example str with tokens for article: "[article:title]([article:id])", created at date:
-                [article:created_at], author: [article:user:name]([article:user:id]),
-                [article:user:email], [article:user:city:country:title], [article:user:city:title].
+        $str = StrToken::setText('
+                Example str with tokens for article: "[article:title]([article:id])",
+                Article created at date: [article:created_at],
+                Author: [article:user:name]([article:user:id]).
+                Article first category: [article:txArticleCategories:name],
+                Article status: [article:txArticleStatus:name],
+                User: [article:user:email], [article:user:city:country:title], [article:user:city:title].
                 Generated token at: [config:app.name], [date:raw]
                 [article:test:Hello]!!!
                 ')
@@ -72,11 +76,14 @@ class HomeController extends Controller
                 
         print_r($str);
         /*
-         Example str with tokens for article: "Test article title(23)", created at date:
-         15.07.2018, author: Taylor Otwell(1),
-         taylorotwell@gmail.com, AR, Little Rock.
+         Example str with tokens for article: "Test article title(23)",
+         Article created at date: 15.07.2018,
+         Author: Taylor Otwell(1),
+         Article first category: Web-programming,
+         Article status: article_publish,
+         User: taylorotwell@gmail.com, AR, Little Rock.
          Generated token at: Laravel, 2018-10-27 00:00:00
-         "TEST TOKEN:Hello"!!! 
+         TEST TOKEN:Hello!!! 
          */        
 
         return view('stow', compact('article', 'info'));
@@ -105,9 +112,12 @@ This is "TEST TOKEN", created at: 23.11.2018
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Fomvasss\Taxonomy\Models\Traits\HasTaxonomies;
 
 class Article extends Model
 {
+    use HasTaxonomies;
+    
     //...
     
     public function strTokenTest($entity, $method, $attr): string
@@ -115,17 +125,30 @@ class Article extends Model
         // $entity - this article
         // $method - "test"
         // $attr - attributes
-        return '"TEST TOKEN:+'.$attr.'"';
+        return 'TEST TOKEN:' . $attr;
     }
     
     public function strTokenCreatedAt(): string
     {
         return $this->created_at->format('d.m.Y');
     }
+    
+    // For package https://github.com/fomvasss/laravel-taxonomy
+    public function txArticleCategories()
+    {
+        return $this->termsByVocabulary('product_categories');
+    }
+    
+    // For package https://github.com/fomvasss/laravel-taxonomy
+    public function txArticleStatus()
+    {
+        return $this->term('status', 'system_name')
+            ->where('vocabulary', 'post_statuses');
+    }
 }
 ```
 
-#### Use in blade templale
+#### Use in blade template
 
 ```
 @php(\StrToken::setEntity($article)->setDate($article->created_at))
