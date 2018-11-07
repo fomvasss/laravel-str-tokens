@@ -16,6 +16,20 @@ use Illuminate\Database\Eloquent\Model;
 class StrTokenGenerator
 {
     /**
+     * The Laravel application instance.
+     *
+     * @var \Illuminate\Foundation\Application
+     */
+    protected $app;
+    
+    /**
+     * The Laravel application configs.
+     * 
+     * @var array 
+     */
+    protected $config;
+    
+    /**
      * @var string
      */
     protected $text = '';
@@ -35,6 +49,19 @@ class StrTokenGenerator
      */
     protected $clearEmptyTokens = true;
 
+    /**
+     * StrTokenGenerator constructor.
+     */
+    public function __construct($app = null)
+    {
+        if (!$app) {
+            $app = app();   //Fallback when $app is not given
+        }
+        $this->app = $app;
+
+        $this->config = $this->app['config'];
+    }
+    
     /**
      * @param string $text
      * @return StrTokenGenerator
@@ -194,9 +221,9 @@ class StrTokenGenerator
 
                     $replacements[$original] = $tm->setText($newOriginal)->setEntity($firstRelatedEntity)->replace();
                 }
-                // is field model
+            // Is field model
             } else {
-                // TODO: check available fields
+                // TODO: make and check available model fields
                 $replacements[$original] = $this->entity->{$key};
             }
         }
@@ -229,9 +256,13 @@ class StrTokenGenerator
     {
         $replacements = [];
 
+        $disable = $this->config->get('str-tokens.disable_configs', []);
+
         foreach ($tokens as $name => $original) {
-            $res = config($name, '');
-            $replacements[$original] = is_string($res) ? $res : '';
+            if (! Helpers::strIs($disable, $name)) {
+                $res = $this->config->get($name, '');
+                $replacements[$original] = is_string($res) ? $res : '';
+            }
         }
 
         return $replacements;
@@ -250,7 +281,7 @@ class StrTokenGenerator
             if ($name === 'raw') {
                 $replacements[$original] = $this->date;
             } else {
-                $format = config('str-tokens.date.formats.'.$name, 'D, m/d/Y - H:i');
+                $format = $this->config->get('str-tokens.date.formats.'.$name, 'D, m/d/Y - H:i');
                 $replacements[$original] = $this->date->format($format);
             }
         }
