@@ -32,6 +32,8 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
     {
         $this->mergeConfigFrom(__DIR__.'/../config/str-tokens.php', 'str-tokens');
 
-        $this->app->singleton(StrTokenGenerator::class);
+        $this->app->singleton(StrTokenGenerator::class, function () {
+            return new StrTokenGenerator($this->app);
+        });
     }
 }

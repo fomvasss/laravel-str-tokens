@@ -18,9 +18,7 @@ Run from the command line:
 composer require fomvasss/laravel-str-tokens
 ```
 
-### Publish the configurations
-
-Run this on the command line:
+For publish the configurations, run this on the command line:
 
 ```
 php artisan vendor:publish --provider="Fomvasss\LaravelStrTokens\ServiceProvider"
@@ -30,7 +28,7 @@ php artisan vendor:publish --provider="Fomvasss\LaravelStrTokens\ServiceProvider
 
 ## Examples usage
 
-#### Use `StrToken` facade in your controllers
+### Use `StrToken` facade in your controllers
 
 ```php
 <?php 
@@ -65,6 +63,7 @@ class HomeController extends Controller
                 Article created at date: [article:created_at],
                 Author: [article:user:name]([article:user:id]).
                 Article first category: [article:txArticleCategories:name],
+                Article root category: [article:txArticleCategories:root:name],
                 Article status: [article:txArticleStatus:name],
                 User: [article:user:email], [article:user:city:country:title], [article:user:city:title].
                 Generated token at: [config:app.name], [date:raw]
@@ -91,7 +90,24 @@ class HomeController extends Controller
 }
 ```
 
-#### Use (settings) in models
+Also, you can use `setEntities()` method for set many models, for example:
+```php
+<?php 
+$user1 = User::find(1);
+$user2 = User::find(2);
+
+$str = StrToken::setText('
+		User: [user1:name]/[user1:email]
+		User: [user2:name]/[user2:email]
+	')->setEntities(['user1' => $user1, 'user2' => $user2])->replace();
+	
+	/*
+	User: Taylor Otwell/taylorotwell@gmail.com
+	User: Vasyl Fomin/fomvasss@gmail.com
+	*/
+```
+
+#### Use (settings) in Eloquent models
 
 In your models you can create own methods for generate tokens.
 In next example, we create two custom methods: `strTokenTest()`, `strTokenCreatedAt()`
@@ -105,6 +121,7 @@ And result:
 ```
 This is "TEST TOKEN", created at: 23.11.2018
 ```
+__Article model:__
 
 ```php
 <?php
@@ -130,7 +147,7 @@ class Article extends Model
     
     public function strTokenCreatedAt(): string
     {
-        return $this->created_at->format('d.m.Y');
+        return $this->created_at->format('d.m.Y');	
     }
     
     // For package https://github.com/fomvasss/laravel-taxonomy
@@ -147,17 +164,52 @@ class Article extends Model
     }
 }
 ```
+__Term model:__
+
+```php
+<?php
+
+namespace App\Models\Taxonomies;
+
+use App\Article;
+
+class Term extends \Fomvasss\Taxonomy\Models\Term
+{
+    public function articles()
+    {
+        return $this->morphedByMany(Article::class, 'termable');
+    }
+
+	/**
+ 	* Method for generate next example token for article model:
+ 	* [article:txArticleCategories:root:name]
+	*	 
+	* @param $entity
+	* @param $r
+	* @param $param
+	* @return mixed
+ 	*/
+    public function strTokenRoot($entity, $r, $param)
+    {
+        if ($root = $entity->ancestors->first()) {
+            return $root->{$param};
+        }
+
+        return $entity->{$param};
+    }
+}
+```
+
 
 #### Use in blade template
 
 ```
 @php(\StrToken::setEntity($article)->setDate($article->created_at))
-
 @php(\StrToken::setText('[article:title] - [date:short]'))
-
 <h3>{!! \StrToken::replace() !!}</h3>
 ```
 
 ## Links
 
+* [laravel-taxonomy](https://github.com/fomvasss/laravel-taxonomy)
 * [Use perfect package for url-aliases](https://github.com/fomvasss/laravel-url-aliases)

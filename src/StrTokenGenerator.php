@@ -8,45 +8,31 @@
 
 namespace Fomvasss\LaravelStrTokens;
 
-use App\Models\MetaTag;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
  
 class StrTokenGenerator
 {
-    /**
-     * The Laravel application instance.
-     *
-     * @var \Illuminate\Foundation\Application
-     */
+    /** @var \Illuminate\Foundation\Application The Laravel application instance. */
     protected $app;
     
-    /**
-     * The Laravel application configs.
-     * 
-     * @var array 
-     */
+    /** @var mixed The Laravel application configs. */
     protected $config;
     
-    /**
-     * @var string
-     */
+    /** @var string */
     protected $text = '';
 
-    /**
-     * @var null
-     */
+    /** @var null */
     protected $date = null;
 
-    /**
-     * @var null
-     */
+    /** @var null */
     protected $entity = null;
+    
+    /** @var array */
+    protected $entities = [];
 
-    /**
-     * @var bool
-     */
+    /** @var bool */
     protected $clearEmptyTokens = true;
 
     /**
@@ -96,6 +82,22 @@ class StrTokenGenerator
     }
 
     /**
+     * @param array $entities [string key => Illuminate\Database\Eloquent\Model value]
+     * @return \Fomvasss\LaravelStrTokens\StrTokenGenerator
+     * @throws \Exception
+     */
+    public function setEntities(array $entities): self
+    {
+        foreach ($entities as $key => $entity) {
+            $this->ensureValidEntity($entity);
+        }
+        
+        $this->entities = $entities;
+        
+        return $this;
+    }
+    
+    /**
      * @return StrTokenGenerator
      */
     public function doNotClearEmptyTokens(): self
@@ -131,16 +133,17 @@ class StrTokenGenerator
             } elseif ($key === 'config') {
                 $replacements += $this->configTokens($attributes);
 
-            } elseif ($key === 'var') {
-                $replacements += $this->variablesTokens($attributes);
-
             } elseif ($this->entity && strtolower($key) === snake_case(class_basename($this->entity))) {
-                $replacements += $this->eloquentModelTokens($attributes, $key);
+                $replacements += $this->eloquentModelTokens($this->entity, $attributes, $key);
 
             // For related taxonomy: https://github.com/fomvasss/laravel-taxonomy
             // and you set preffix in your relation methods - "tx"
             } elseif ($this->entity && substr($key, 0, 2) === 'tx') {
-                $replacements += $this->eloquentModelTokens($attributes, $key);
+                $replacements += $this->eloquentModelTokens($this->entity, $attributes, $key);
+                
+            } elseif (in_array($key, array_keys($this->entities))) {
+                $eloquentModel = $this->entities[$key];
+                $replacements += $this->eloquentModelTokens($eloquentModel, $attributes, $key);
             }
 
             if ($this->clearEmptyTokens) {
@@ -194,7 +197,7 @@ class StrTokenGenerator
      * @param string $type
      * @return array
      */
-    protected function eloquentModelTokens(array $tokens, string $type): array
+    protected function eloquentModelTokens(Model $eloquentModel, array $tokens, string $type): array
     {
         $replacements = [];
 
@@ -203,20 +206,20 @@ class StrTokenGenerator
             $strTokenMethod = camel_case('str_token_'.$function);
 
             // Exists token generate method (defined user)
-            if (method_exists($this->entity, $strTokenMethod)) {
+            if (method_exists($eloquentModel, $strTokenMethod)) {
 
-                $replacements[$original] = $this->entity->{$strTokenMethod}($this->entity, ...explode(':', $key));
+                $replacements[$original] = $eloquentModel->{$strTokenMethod}($eloquentModel, ...explode(':', $key));
 
             // Exists relation function (defined user)
-            } elseif (method_exists($this->entity, $function)) {
+            } elseif (method_exists($eloquentModel, $function)) {
 
                 $newOriginal = str_replace("$type:", '', $original);
 
-                if ($this->entity->{$function} instanceof Model) {
+                if ($eloquentModel->{$function} instanceof Model) {
                     $tm = new static();
 
-                    $replacements[$original] = $tm->setText($newOriginal)->setEntity($this->entity->{$function})->replace();
-                } elseif ($this->entity->{$function} instanceof Collection && ($firstRelatedEntity = $this->entity->{$function}->first())) {
+                    $replacements[$original] = $tm->setText($newOriginal)->setEntity($eloquentModel->{$function})->replace();
+                } elseif ($eloquentModel->{$function} instanceof Collection && ($firstRelatedEntity = $eloquentModel->{$function}->first())) {
                     $tm = new static();
 
                     $replacements[$original] = $tm->setText($newOriginal)->setEntity($firstRelatedEntity)->replace();
@@ -224,25 +227,8 @@ class StrTokenGenerator
             // Is field model
             } else {
                 // TODO: make and check available model fields
-                $replacements[$original] = $this->entity->{$key};
+                $replacements[$original] = $eloquentModel->{$key};
             }
-        }
-
-        return $replacements;
-    }
-
-    /**
-     * TODO: require https://github.com/fomvasss/laravel-variables
-     *
-     * @param $tokens
-     * @return array
-     */
-    protected function variablesTokens(array $tokens): array
-    {
-        $replacements = [];
-
-        foreach ($tokens as $name => $original) {
-            $replacements[$original] = var_get($name);
         }
 
         return $replacements;
@@ -287,5 +273,16 @@ class StrTokenGenerator
         }
 
         return $replacements;
+    }
+
+    /**
+     * @param $entity
+     * @throws \Exception
+     */
+    protected function ensureValidEntity($entity)
+    {
+        if (! $entity instanceof Model) {
+            throw new \Exception("StrToken Entity must by instance of '" . Model::class . "'. Current instance of '" . gettype($entity) . "'");
+        }
     }
 }
