@@ -158,7 +158,7 @@ class StrTokenGenerator
     }
 
     /**
-     * Taken from the best CMS - Drupal :)
+     * Token scan with CMS Drupal :)
      * https://api.drupal.org/api/drupal/includes%21token.inc/function/token_scan/7.x
      * preg_match_all('/\[([^\]:]*):([^\]]*)\]/', $tokenStr, $matches);
      *

@@ -79,6 +79,7 @@ class HomeController extends Controller
          Article created at date: 15.07.2018,
          Author: Taylor Otwell(1),
          Article first category: Web-programming,
+         Article root category: Programming,
          Article status: article_publish,
          User: taylorotwell@gmail.com, AR, Little Rock.
          Generated token at: Laravel, 2018-10-27 00:00:00
@@ -95,22 +96,25 @@ Also, you can use `setEntities()` method for set many models, for example:
 <?php 
 $user1 = User::find(1);
 $user2 = User::find(2);
+$article = Article::first();
 
 $str = StrToken::setText('
 		User: [user1:name]/[user1:email]
 		User: [user2:name]/[user2:email]
-	')->setEntities(['user1' => $user1, 'user2' => $user2])->replace();
+		Article: "[firstArticle:title]"
+	')->setEntities(['user1' => $user1, 'user2' => $user2, 'firstArticle' => $article])->replace();
 	
 	/*
 	User: Taylor Otwell/taylorotwell@gmail.com
 	User: Vasyl Fomin/fomvasss@gmail.com
+	Article: "Laravel is cool framework"
 	*/
 ```
 
 #### Use (settings) in Eloquent models
 
 In your models you can create own methods for generate tokens.
-In next example, we create two custom methods: `strTokenTest()`, `strTokenCreatedAt()`
+In next example, we create custom methods: `strTokenTest()`, `strTokenCreatedAt()`
 
 And now we can use next token in string: 
 ```
