@@ -1,5 +1,9 @@
 # Changelog Laravel Str Tokens
 
+## 0.5.1 - 2019-05-09
+
+- Support Laravel 5.8
+
 ## 0.4.0 - 2019-02-10
 
 - Added sopport many entities

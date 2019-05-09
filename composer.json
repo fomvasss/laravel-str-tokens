@@ -9,22 +9,14 @@
             "name": "Fomin Vasyl",
             "email": "fomvasss@gmail.com",
             "role": "Developer"
-        },
-        {
-            "name": "Klimovich Y",
-            "role": "Сonsultant"
-        },
-        {
-            "name": "Ogryzko D",
-            "role": "Сonsultant"
         }
     ],
     "license": "MIT",
     "require": {
         "php" : ">=7.0.0",
-        "illuminate/support": "5.6.*|5.7.*",
-        "illuminate/view": "5.6.*|5.7.*",
-        "nesbot/carbon": "^1.25"
+        "illuminate/support": "5.6.*|5.7.*|5.8.*",
+        "illuminate/view": "5.6.*|5.7.*|5.8.*",
+        "nesbot/carbon": "^1.25 || ^1.26.3 || ^2.0"
     },
     "autoload": {
         "psr-4": {
