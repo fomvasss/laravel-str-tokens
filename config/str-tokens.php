@@ -19,7 +19,7 @@ return [
 
 
     /* -----------------------------------------------------------------
-     |  Set pattern for safe app configs
+     |  Patterns disabled configs use in token
      | -----------------------------------------------------------------
      */
     'disable_configs' => [

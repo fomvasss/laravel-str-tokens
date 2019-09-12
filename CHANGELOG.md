@@ -1,5 +1,9 @@
 # Changelog Laravel Str Tokens
 
+## 1.0.0 - 2019-09-12
+
+- Support Laravel 6
+
 ## 0.5.1 - 2019-05-09
 
 - Support Laravel 5.8

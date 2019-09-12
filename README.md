@@ -18,7 +18,7 @@ Run from the command line:
 composer require fomvasss/laravel-str-tokens
 ```
 
-For publish the configurations, run this on the command line:
+For publish the configs, run next on the command line:
 
 ```
 php artisan vendor:publish --provider="Fomvasss\LaravelStrTokens\ServiceProvider"
