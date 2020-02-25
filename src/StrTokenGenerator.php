@@ -11,7 +11,8 @@ namespace Fomvasss\LaravelStrTokens;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
- 
+use Illuminate\Support\Str;
+
 class StrTokenGenerator
 {
     /** @var \Illuminate\Foundation\Application The Laravel application instance. */
@@ -133,7 +134,7 @@ class StrTokenGenerator
             } elseif ($key === 'config') {
                 $replacements += $this->configTokens($attributes);
 
-            } elseif ($this->entity && strtolower($key) === snake_case(class_basename($this->entity))) {
+            } elseif ($this->entity && strtolower($key) === Str::snake(class_basename($this->entity))) {
                 $replacements += $this->eloquentModelTokens($this->entity, $attributes, $key);
 
             // For related taxonomy: https://github.com/fomvasss/laravel-taxonomy
@@ -203,7 +204,7 @@ class StrTokenGenerator
 
         foreach ($tokens as $key => $original) {
             $function = explode(':', $key)[0];
-            $strTokenMethod = camel_case('str_token_'.$function);
+            $strTokenMethod = Str::camel('str_token_'.$function);
 
             // Exists token generate method (defined user)
             if (method_exists($eloquentModel, $strTokenMethod)) {
