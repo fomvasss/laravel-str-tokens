@@ -33,6 +33,9 @@ class StrTokenGenerator
     /** @var array */
     protected $entities = [];
 
+    /** @var array */
+    protected $vars = [];
+
     /** @var bool */
     protected $clearEmptyTokens = true;
 
@@ -83,7 +86,7 @@ class StrTokenGenerator
     }
 
     /**
-     * @param array $entities [string key => Illuminate\Database\Eloquent\Model value]
+     * @param array $entities|Illuminate\Database\Eloquent\Model
      * @return \Fomvasss\LaravelStrTokens\StrTokenGenerator
      * @throws \Exception
      */
@@ -95,6 +98,29 @@ class StrTokenGenerator
         
         $this->entities = $entities;
         
+        return $this;
+    }
+
+    /**
+     * @param array $vars
+     * @return $this
+     */
+    public function setVars(array $vars): self
+    {
+        $this->vars = $vars;
+
+        return $this;
+    }
+
+    /**
+     * @param string $key
+     * @param $value
+     * @return $this
+     */
+    public function setVar(string $key, $value): self
+    {
+        $this->vars[$key] = $value;
+
         return $this;
     }
     
@@ -133,6 +159,9 @@ class StrTokenGenerator
 
             } elseif ($key === 'config') {
                 $replacements += $this->configTokens($attributes);
+
+            } elseif ($key === 'var') {
+                $replacements += $this->varTokens($attributes);
 
             } elseif ($this->entity && strtolower($key) === Str::snake(class_basename($this->entity))) {
                 $replacements += $this->eloquentModelTokens($this->entity, $attributes, $key);
@@ -246,10 +275,26 @@ class StrTokenGenerator
         $disable = $this->config->get('str-tokens.disable_configs', []);
 
         foreach ($tokens as $name => $original) {
-            if (! Helpers::strIs($disable, $name)) {
+            if (! Str::is($disable, $name)) {
                 $res = $this->config->get($name, '');
                 $replacements[$original] = is_string($res) ? $res : '';
             }
+        }
+
+        return $replacements;
+    }
+
+    /**
+     * @param array $tokens
+     * @return array
+     */
+    protected function varTokens(array $tokens): array
+    {
+        $replacements = [];
+
+        foreach ($tokens as $name => $original) {
+            $res = $this->vars[$name] ?? '';
+            $replacements[$original] = is_string($res) ? $res : '';
         }
 
         return $replacements;

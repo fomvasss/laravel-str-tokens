@@ -1,5 +1,12 @@
 # Changelog Laravel Str Tokens
 
+## 1.1.0 - 2020-02-25
+
+- Added static `vars` for tokens
+- Removed deprecated helpers
+- Updated docs
+- Added license text
+
 ## 1.0.0 - 2019-09-12
 
 - Support Laravel 6
@@ -10,7 +17,7 @@
 
 ## 0.4.0 - 2019-02-10
 
-- Added sopport many entities
+- Added support many entities
 - Remove `get_var`...
 
 ## 0.2.1 - 2018-10-28

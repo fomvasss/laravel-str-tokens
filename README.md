@@ -43,12 +43,13 @@ class HomeController extends Controller
     
     public function store(Request $request)
     {
-        $title = StrToken::setText($request->title.' [user:name], [date:date]')
-            ->setEntity(\Auth::user())
+        $title = StrToken::setText($request->title . ' - [user:name], [date:date]')
+            ->setEntity(Auth::user())
             ->replace();
         $article = \App\Model\Article::create([
-            //.. article data
+            'user_id' => Auth::id(),
             'title' => $title,
+            'body' => 'Hello world!'
         ]);
 
         //..
@@ -59,18 +60,23 @@ class HomeController extends Controller
         $article = \App\Model\Article::findOrFail($id);
         
         $str = StrToken::setText('
-                Example str with tokens for article: "[article:title]([article:id])",
-                Article created at date: [article:created_at],
-                Author: [article:user:name]([article:user:id]).
-                Article first category: [article:txArticleCategories:name],
-                Article root category: [article:txArticleCategories:root:name],
-                Article status: [article:txArticleStatus:name],
-                User: [article:user:email], [article:user:city:country:title], [article:user:city:title].
-                Generated token at: [config:app.name], [date:raw]
-                [article:test:Hello]!!!
+                    Example str with tokens for article: "[article:title]([article:id])",
+                    Article created at date: [article:created_at],
+                    Author: [article:user:name]([article:user:id]).
+                    Article first category: [article:txArticleCategories:name],
+                    Article root category: [article:txArticleCategories:root:name],
+                    Article status: [article:txArticleStatus:name],
+                    User: [article:user:email], [article:user:city:country:title], [article:user:city:title].
+                    Generated token at: [config:app.name], [date:raw]
+                    [article:test:Hello]!!!
+                    Length: [var:length];
+                    Width: [var:width];
+                    Price: [var:price]
                 ')
             ->setDate(\Carbon\Carbon::tomorrow())
             ->setEntity($article)
+            ->setVars(['length' => '2.2 m.', 'width' => '3.35 m.'])
+            ->setVar('price', '$13')
             ->replace();
                 
         print_r($str);
@@ -84,9 +90,12 @@ class HomeController extends Controller
          User: taylorotwell@gmail.com, AR, Little Rock.
          Generated token at: Laravel, 2018-10-27 00:00:00
          TEST TOKEN:Hello!!! 
+         Length: 2.2 m.;
+         Width: 3.35 m.;
+         Price: $13
          */        
 
-        return view('stow', compact('article', 'info'));
+        return view('stow', compact('article', 'str'));
     }
 }
 ```
@@ -99,10 +108,14 @@ $user2 = User::find(2);
 $article = Article::first();
 
 $str = StrToken::setText('
-		User: [user1:name]/[user1:email]
-		User: [user2:name]/[user2:email]
+		User1: [user1:name]/[user1:email]
+		User2: [user2:name]/[user2:email]
 		Article: "[firstArticle:title]"
-	')->setEntities(['user1' => $user1, 'user2' => $user2, 'firstArticle' => $article])->replace();
+	')->setEntities([
+        'user1' => $user1,
+        'user2' => $user2,
+        'firstArticle' => $article,
+    ])->replace();
 	
 	/*
 	User: Taylor Otwell/taylorotwell@gmail.com
@@ -111,7 +124,7 @@ $str = StrToken::setText('
 	*/
 ```
 
-#### Use (settings) in Eloquent models
+#### Defining your tokens in Eloquent models
 
 In your models you can create own methods for generate tokens.
 In next example, we create custom methods: `strTokenTest()`, `strTokenCreatedAt()`
@@ -213,7 +226,15 @@ class Term extends \Fomvasss\Taxonomy\Models\Term
 <h3>{!! \StrToken::replace() !!}</h3>
 ```
 
+## Changelog
+
+Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed recently.
+
 ## Links
 
 * [laravel-taxonomy](https://github.com/fomvasss/laravel-taxonomy)
 * [Use perfect package for url-aliases](https://github.com/fomvasss/laravel-url-aliases)
+
+## License
+
+The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
