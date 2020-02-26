@@ -6,7 +6,7 @@
 [![Total Downloads](https://img.shields.io/packagist/dt/fomvasss/laravel-str-tokens.svg?style=for-the-badge)](https://packagist.org/packages/fomvasss/laravel-str-tokens)
 [![Quality Score](https://img.shields.io/scrutinizer/g/fomvasss/laravel-str-tokens.svg?style=for-the-badge)](https://scrutinizer-ci.com/g/fomvasss/laravel-str-tokens)
 
-With this package you can manage & generate strings with tokens, it seems like CMS Drupal.
+With this package you can manage & generate strings with tokens (shortcodes), it seems like CMS Drupal.
 
 ----------
 
@@ -43,22 +43,25 @@ class HomeController extends Controller
     
     public function store(Request $request)
     {
-        $title = StrToken::setText($request->title . ' - [user:name], [date:date]')
+        // Generate dynamic article title
+        $title = StrToken::setText($request->title . ' - [user:name], [date:short]')
             ->setEntity(Auth::user())
             ->replace();
+        // Save article model
         $article = \App\Model\Article::create([
             'user_id' => Auth::id(),
             'title' => $title,
             'body' => 'Hello world!'
         ]);
 
-        //..
+        //...
     }
 
     public function show($id)
     {
         $article = \App\Model\Article::findOrFail($id);
         
+        // Use Eloquent model, vars and date for generate tokens
         $str = StrToken::setText('
                     Example str with tokens for article: "[article:title]([article:id])",
                     Article created at date: [article:created_at],
@@ -78,7 +81,8 @@ class HomeController extends Controller
             ->setVars(['length' => '2.2 m.', 'width' => '3.35 m.'])
             ->setVar('price', '$13')
             ->replace();
-                
+        
+        // Print token result        
         print_r($str);
         /*
          Example str with tokens for article: "Test article title(23)",
@@ -100,7 +104,7 @@ class HomeController extends Controller
 }
 ```
 
-Also, you can use `setEntities()` method for set many models, for example:
+Also, you can use `setEntities()` method for set many Eloquent models, for example:
 ```php
 <?php 
 $user1 = User::find(1);
@@ -108,8 +112,8 @@ $user2 = User::find(2);
 $article = Article::first();
 
 $str = StrToken::setText('
-		User1: [user1:name]/[user1:email]
-		User2: [user2:name]/[user2:email]
+		User1: [user1:name] / [user1:email]
+		User2: [user2:name] / [user2:email]
 		Article: "[firstArticle:title]"
 	')->setEntities([
         'user1' => $user1,
@@ -118,15 +122,18 @@ $str = StrToken::setText('
     ])->replace();
 	
 	/*
-	User: Taylor Otwell/taylorotwell@gmail.com
-	User: Vasyl Fomin/fomvasss@gmail.com
-	Article: "Laravel is cool framework"
+	User: Taylor Otwell / taylorotwell@gmail.com
+	User: Vasyl Fomin / fomvasss@gmail.com
+	Article: "Laravel is awesome framework"
 	*/
 ```
 
-#### Defining your tokens in Eloquent models
+#### Defining custom tokens in Eloquent models
 
 In your models you can create own methods for generate tokens.
+
+The names of these methods must begin with `strToken`.
+
 In next example, we create custom methods: `strTokenTest()`, `strTokenCreatedAt()`
 
 And now we can use next token in string: 
@@ -138,7 +145,7 @@ And result:
 ```
 This is "TEST TOKEN", created at: 23.11.2018
 ```
-__Article model:__
+_Example `Article` Eloquent model:_
 
 ```php
 <?php
@@ -181,7 +188,7 @@ class Article extends Model
     }
 }
 ```
-__Term model:__
+_Example `Term` model:_
 
 ```php
 <?php

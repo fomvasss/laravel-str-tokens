@@ -1,8 +1,8 @@
 {
     "name": "fomvasss/laravel-str-tokens",
-    "description": "A package to manage and generate string with tokens (for Eloquent Models)",
+    "description": "A package to manage and generate string with tokens (shortcodes) (for Eloquent Models)",
     "type": "composer-package",
-    "keywords": ["token", "tag", "string", "laravel", "drupal"],
+    "keywords": ["token", "tag", "string", "shortcodes", "laravel", "drupal"],
     "homepage": "https://github.com/fomvasss/laravel-str-tokens",
     "authors": [
         {
