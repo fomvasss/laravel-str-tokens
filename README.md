@@ -23,88 +23,55 @@ For publish the configs, run next on the command line:
 ```
 php artisan vendor:publish --provider="Fomvasss\LaravelStrTokens\ServiceProvider"
 ```
-- A configuration file will be publish to `config/str-tokens.php`
+
+Configuration file will be publish to `config/str-tokens.php`
 
 
-## Examples usage
-
-### Use `StrToken` facade in your controllers
+## Usage
 
 ```php
-<?php 
 
-namespace App\Http\Controllers;
+// Use Eloquent model, vars and date for generate tokens
+$str = StrToken::setText('
+            Example str with tokens for article: "[article:title]([article:id])",
+            Article created at date: [article:created_at],
+            Author: [article:user:name]([article:user:id]).
+            Article first category: [article:txArticleCategories:name],
+            Article root category: [article:txArticleCategories:root:name],
+            Article status: [article:txArticleStatus:name],
+            User: [article:user:email], [article:user:city:country:title], [article:user:city:title].
+            Generated token at: [config:app.name], [date:raw]
+            [article:test:Hello]!!!
+            Length: [var:length];
+            Width: [var:width];
+            Price: [var:price]
+        ')
+    ->setDate(\Carbon\Carbon::tomorrow())
+    ->setEntity(\App\Model\Article::findOrFail(13))
+    ->setVars(['length' => '2.2 m.', 'width' => '3.35 m.'])
+    ->setVar('price', '$13')
+    ->replace();
 
-use Fomvasss\LaravelStrTokens\Facades\StrToken;
-use Illuminate\Http\Request;
+// Print result text        
+print_r($str);
+/*
+ Example str with tokens for article: "Test article title(23)",
+ Article created at date: 15.07.2018,
+ Author: Taylor Otwell(1),
+ Article first category: Web-programming,
+ Article root category: Programming,
+ Article status: article_publish,
+ User: taylorotwell@gmail.com, AR, Little Rock.
+ Generated token at: Laravel, 2018-10-27 00:00:00
+ TEST TOKEN:Hello!!! 
+ Length: 2.2 m.;
+ Width: 3.35 m.;
+ Price: $13
+ */        
 
-class HomeController extends Controller 
-{
-    
-    public function store(Request $request)
-    {
-        // Generate dynamic article title
-        $title = StrToken::setText($request->title . ' - [user:name], [date:short]')
-            ->setEntity(Auth::user())
-            ->replace();
-        // Save article model
-        $article = \App\Model\Article::create([
-            'user_id' => Auth::id(),
-            'title' => $title,
-            'body' => 'Hello world!'
-        ]);
-
-        //...
-    }
-
-    public function show($id)
-    {
-        $article = \App\Model\Article::findOrFail($id);
-        
-        // Use Eloquent model, vars and date for generate tokens
-        $str = StrToken::setText('
-                    Example str with tokens for article: "[article:title]([article:id])",
-                    Article created at date: [article:created_at],
-                    Author: [article:user:name]([article:user:id]).
-                    Article first category: [article:txArticleCategories:name],
-                    Article root category: [article:txArticleCategories:root:name],
-                    Article status: [article:txArticleStatus:name],
-                    User: [article:user:email], [article:user:city:country:title], [article:user:city:title].
-                    Generated token at: [config:app.name], [date:raw]
-                    [article:test:Hello]!!!
-                    Length: [var:length];
-                    Width: [var:width];
-                    Price: [var:price]
-                ')
-            ->setDate(\Carbon\Carbon::tomorrow())
-            ->setEntity($article)
-            ->setVars(['length' => '2.2 m.', 'width' => '3.35 m.'])
-            ->setVar('price', '$13')
-            ->replace();
-        
-        // Print token result        
-        print_r($str);
-        /*
-         Example str with tokens for article: "Test article title(23)",
-         Article created at date: 15.07.2018,
-         Author: Taylor Otwell(1),
-         Article first category: Web-programming,
-         Article root category: Programming,
-         Article status: article_publish,
-         User: taylorotwell@gmail.com, AR, Little Rock.
-         Generated token at: Laravel, 2018-10-27 00:00:00
-         TEST TOKEN:Hello!!! 
-         Length: 2.2 m.;
-         Width: 3.35 m.;
-         Price: $13
-         */        
-
-        return view('stow', compact('article', 'str'));
-    }
-}
 ```
 
-Also, you can use `setEntities()` method for set many Eloquent models, for example:
+You can use method `setEntities()` for set many Eloquent models, for example:
 ```php
 <?php 
 $user1 = User::find(1);
@@ -165,7 +132,7 @@ class Article extends Model
     {
         // $entity - this article
         // $method - "test"
-        // $attr - attributes
+        // $attr - additional args
         return 'TEST TOKEN:' . $attr;
     }
     
@@ -240,7 +207,6 @@ Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed re
 ## Links
 
 * [laravel-taxonomy](https://github.com/fomvasss/laravel-taxonomy)
-* [Use perfect package for url-aliases](https://github.com/fomvasss/laravel-url-aliases)
 
 ## License
 
