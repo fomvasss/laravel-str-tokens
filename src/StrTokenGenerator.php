@@ -277,7 +277,7 @@ class StrTokenGenerator
         foreach ($tokens as $name => $original) {
             if (! Str::is($disable, $name)) {
                 $res = $this->config->get($name, '');
-                $replacements[$original] = is_string($res) ? $res : '';
+                $replacements[$original] = is_scalar($res) ? $res : '';
             }
         }
 
@@ -294,7 +294,7 @@ class StrTokenGenerator
 
         foreach ($tokens as $name => $original) {
             $res = $this->vars[$name] ?? '';
-            $replacements[$original] = is_string($res) ? $res : '';
+            $replacements[$original] = is_scalar($res) ? $res : '';
         }
 
         return $replacements;
