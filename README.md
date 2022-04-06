@@ -1,3 +1,6 @@
+
+[<img src="https://github-ads.s3.eu-central-1.amazonaws.com/support-ukraine.svg?t=1" />](https://supportukrainenow.org)
+
 # Laravel Str Tokens
 
 [![License](https://img.shields.io/packagist/l/fomvasss/laravel-str-tokens.svg?style=for-the-badge)](https://packagist.org/packages/fomvasss/laravel-str-tokens)
