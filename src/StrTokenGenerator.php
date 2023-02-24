@@ -231,8 +231,18 @@ class StrTokenGenerator
     {
         $replacements = [];
 
+        $disable = array_merge(
+            $this->config->get('str-tokens.disable_model_tokens', []),
+            method_exists($eloquentModel, 'strTokenBlacklist') ? $eloquentModel->strTokenBlacklist : []
+        );
+        $delim = $this->config->get('str-tokens.token_split_character', ':');
+        $canTraverseRelations = $this->config->get('str-tokens.can_traverse_relations', true);
+
+        
+
         foreach ($tokens as $key => $original) {
-            $function = explode(':', $key)[0];
+            if (Str::is($disable, $key)) { continue; }
+            $function = explode($delim, $key)[0];
             $strTokenMethod = Str::camel('str_token_'.$function);
 
             // Exists token generate method (defined user)
@@ -241,9 +251,9 @@ class StrTokenGenerator
                 $replacements[$original] = $eloquentModel->{$strTokenMethod}($eloquentModel, ...explode(':', $key));
 
             // Exists relation function (defined user)
-            } elseif (method_exists($eloquentModel, $function)) {
+            } elseif ($canTraverseRelations && method_exists($eloquentModel, $function)) {
 
-                $newOriginal = str_replace("$type:", '', $original);
+                $newOriginal = str_replace($type.$delim, '', $original);
 
                 if ($eloquentModel->{$function} instanceof Model) {
                     $tm = new static();
@@ -332,3 +342,4 @@ class StrTokenGenerator
         }
     }
 }
+
