@@ -30,4 +30,5 @@ return [
         'password',
         '*token*',
     ],
+    // 'token_match_pattern' => '',
 ];

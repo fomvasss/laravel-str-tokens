@@ -201,13 +201,13 @@ class StrTokenGenerator
         // Matches tokens with the following pattern: [$type:$name]
         // $type and $name may not contain  [ ] characters.
         // $type may not contain : or whitespace characters, but $name may.
-        preg_match_all('/
+        preg_match_all($this->config->get('str-tokens.token_match_pattern','/
             \\[             # [ - pattern start
             ([^\\s\\[\\]:]*)  # match $type not containing whitespace : [ or ]
             :              # : - separator
             ([^\\[\\]]*)     # match $name not containing [ or ]
             \\]             # ] - pattern end
-            /x', $text, $matches);
+            /x'), $text, $matches);
         $types = $matches[1];
         $tokens = $matches[2];
 
