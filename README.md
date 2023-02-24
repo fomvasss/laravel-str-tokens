@@ -29,6 +29,8 @@ php artisan vendor:publish --provider="Fomvasss\LaravelStrTokens\ServiceProvider
 
 Configuration file will be publish to `config/str-tokens.php`
 
+
+## Configuration 
 The configuration fill will allow you to control how tokens are parsed using `token_match_pattern` and `token_split_character`
 
 You can decide if a token can traverse eloquent model relationships using `can_traverse_relations`
