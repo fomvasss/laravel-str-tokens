@@ -38,7 +38,6 @@ return [
      | -----------------------------------------------------------------
      */
     'disable_configs' => [
-        'account.account',
         'app.key',
         'auth.*',
         'mail.*',
