@@ -201,13 +201,13 @@ class StrTokenGenerator
         // Matches tokens with the following pattern: [$type:$name]
         // $type and $name may not contain  [ ] characters.
         // $type may not contain : or whitespace characters, but $name may.
-        preg_match_all('/
+        preg_match_all($this->config->get('str-tokens.token_match_pattern','/
             \\[             # [ - pattern start
             ([^\\s\\[\\]:]*)  # match $type not containing whitespace : [ or ]
             :              # : - separator
             ([^\\[\\]]*)     # match $name not containing [ or ]
             \\]             # ] - pattern end
-            /x', $text, $matches);
+            /x'), $text, $matches);
         $types = $matches[1];
         $tokens = $matches[2];
 
@@ -231,19 +231,29 @@ class StrTokenGenerator
     {
         $replacements = [];
 
+        $disable = array_merge(
+            $this->config->get('str-tokens.disable_model_tokens', []),
+            method_exists($eloquentModel, 'strTokenBlacklist') ? $eloquentModel->strTokenBlacklist() : []
+        );
+        $whitelist = method_exists($eloquentModel, 'strTokenWhitelist') ? $eloquentModel->strTokenWhitelist() : false;
+        $delim = $this->config->get('str-tokens.token_split_character', ':');
+        $canTraverseRelations = $this->config->get('str-tokens.can_traverse_relations', true);
+
         foreach ($tokens as $key => $original) {
-            $function = explode(':', $key)[0];
+            if(!empty($whitelist) && !Str::is($whitelist,$key)){ continue; }
+            if (Str::is($disable, $key)) { dump('nope'); continue; }
+            $function = explode($delim, $key)[0];
             $strTokenMethod = Str::camel('str_token_'.$function);
 
             // Exists token generate method (defined user)
             if (method_exists($eloquentModel, $strTokenMethod)) {
 
-                $replacements[$original] = $eloquentModel->{$strTokenMethod}($eloquentModel, ...explode(':', $key));
+                $replacements[$original] = $eloquentModel->{$strTokenMethod}($eloquentModel, ...explode($delim, $key));
 
             // Exists relation function (defined user)
-            } elseif (method_exists($eloquentModel, $function)) {
+            } elseif ($canTraverseRelations && method_exists($eloquentModel, $function)) {
 
-                $newOriginal = str_replace("$type:", '', $original);
+                $newOriginal = str_replace($type.$delim, '', $original);
 
                 if ($eloquentModel->{$function} instanceof Model) {
                     $tm = new static();
@@ -332,3 +342,5 @@ class StrTokenGenerator
         }
     }
 }
+
+

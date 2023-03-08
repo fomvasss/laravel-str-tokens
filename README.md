@@ -21,7 +21,7 @@ Run from the command line:
 composer require fomvasss/laravel-str-tokens
 ```
 
-For publish the configs, run next on the command line:
+To publish the configs, run the following command:
 
 ```
 php artisan vendor:publish --provider="Fomvasss\LaravelStrTokens\ServiceProvider"
@@ -29,6 +29,15 @@ php artisan vendor:publish --provider="Fomvasss\LaravelStrTokens\ServiceProvider
 
 Configuration file will be publish to `config/str-tokens.php`
 
+
+## Configuration 
+The configuration fill will allow you to control how tokens are parsed using `token_match_pattern` and `token_split_character`
+
+You can decide if a token can traverse eloquent model relationships using `can_traverse_relations`
+
+You can globally limit what model fields are allowed as tokens using `disable_model_tokens`
+
+You can also limit what tokens are exposed via individual models by creating a `strTokenWhitelist` or `strTokenBlacklist` function that returns an array of valid patterns
 
 ## Usage
 
