@@ -1,6 +1,3 @@
-
-[<img src="https://github-ads.s3.eu-central-1.amazonaws.com/support-ukraine.svg?t=1" />](https://supportukrainenow.org)
-
 # Laravel Str Tokens
 
 [![License](https://img.shields.io/packagist/l/fomvasss/laravel-str-tokens.svg?style=for-the-badge)](https://packagist.org/packages/fomvasss/laravel-str-tokens)
@@ -9,7 +6,7 @@
 [![Total Downloads](https://img.shields.io/packagist/dt/fomvasss/laravel-str-tokens.svg?style=for-the-badge)](https://packagist.org/packages/fomvasss/laravel-str-tokens)
 [![Quality Score](https://img.shields.io/scrutinizer/g/fomvasss/laravel-str-tokens.svg?style=for-the-badge)](https://scrutinizer-ci.com/g/fomvasss/laravel-str-tokens)
 
-With this package you can manage & generate strings with tokens (shortcodes), it seems like CMS Drupal.
+With this package you can manage & generate strings with tokens/shortcodes, it seems like CMS Drupal.
 
 ----------
 
@@ -42,15 +39,12 @@ You can also limit what tokens are exposed via individual models by creating a `
 ## Usage
 
 ```php
-
-// Use Eloquent model, vars and date for generate tokens
 $str = StrToken::setText('
-            Example str with tokens for article: "[article:title]([article:id])",
+            Example str with tokens for article: "[article:title] ([article:id])",
             Article created at date: [article:created_at],
             Author: [article:user:name]([article:user:id]).
-            Article first category: [article:txArticleCategories:name],
-            Article root category: [article:txArticleCategories:root:name],
             Article status: [article:txArticleStatus:name],
+            Article root category: [article:txArticleCategories:root:name],
             User: [article:user:email], [article:user:city:country:title], [article:user:city:title].
             Generated token at: [config:app.name], [date:raw]
             [article:test:Hello]!!!
@@ -64,23 +58,22 @@ $str = StrToken::setText('
     ->setVar('price', '$13')
     ->replace();
 
-// Print result text        
-print_r($str);
-/*
+```
+
+Given result:
+
+```text
  Example str with tokens for article: "Test article title(23)",
  Article created at date: 15.07.2018,
  Author: Taylor Otwell(1),
- Article first category: Web-programming,
+ Article status: published,
  Article root category: Programming,
- Article status: article_publish,
  User: taylorotwell@gmail.com, AR, Little Rock.
  Generated token at: Laravel, 2018-10-27 00:00:00
  TEST TOKEN:Hello!!! 
  Length: 2.2 m.;
  Width: 3.35 m.;
  Price: $13
- */        
-
 ```
 
 You can use method `setEntities()` for set many Eloquent models, for example:
@@ -153,13 +146,7 @@ class Article extends Model
         return $this->created_at->format('d.m.Y');	
     }
     
-    // For package https://github.com/fomvasss/laravel-taxonomy
-    public function txArticleCategories()
-    {
-        return $this->termsByVocabulary('product_categories');
-    }
-    
-    // For package https://github.com/fomvasss/laravel-taxonomy
+    // For package https://github.com/fomvasss/laravel-simple-taxonomy
     public function txArticleStatus()
     {
         return $this->term('status', 'system_name')
@@ -218,7 +205,7 @@ Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed re
 
 ## Links
 
-* [laravel-taxonomy](https://github.com/fomvasss/laravel-taxonomy)
+* [laravel-simple-taxonomy](https://github.com/fomvasss/laravel-simple-taxonomy)
 
 ## License
 

@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: fomvasss
- * Date: 26.10.18
- * Time: 03:21
- */
 
 namespace Fomvasss\LaravelStrTokens;
 
@@ -166,7 +160,7 @@ class StrTokenGenerator
             } elseif ($this->entity && strtolower($key) === Str::snake(class_basename($this->entity))) {
                 $replacements += $this->eloquentModelTokens($this->entity, $attributes, $key);
 
-            // For related taxonomy: https://github.com/fomvasss/laravel-taxonomy
+            // For related taxonomy: https://github.com/fomvasss/laravel-simple-taxonomy
             // and you set preffix in your relation methods - "tx"
             } elseif ($this->entity && substr($key, 0, 2) === 'tx') {
                 $replacements += $this->eloquentModelTokens($this->entity, $attributes, $key);
