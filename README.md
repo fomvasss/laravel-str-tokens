@@ -100,6 +100,9 @@ $str = StrToken::setText('
 	*/
 ```
 
+**Not use together `setEntity` and `setEntities`!**
+**`setEntity` has haight priority!** 
+
 #### Defining custom tokens in Eloquent models
 
 In your models you can create own methods for generate tokens.

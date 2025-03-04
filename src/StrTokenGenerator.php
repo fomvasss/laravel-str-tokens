@@ -90,6 +90,10 @@ class StrTokenGenerator
             $this->ensureValidEntity($entity);
         }
 
+        if (count($entities)) {
+            $this->entity = null;
+        }
+
         $this->entities = $entities;
 
         return $this;
@@ -169,9 +173,6 @@ class StrTokenGenerator
                 $eloquentModel = $this->entities[$key];
                 $replacements += $this->eloquentModelTokens($eloquentModel, $attributes, $key);
             } elseif ($this->entity && method_exists($this->entity, $strTokenMethod = Str::camel('str_token_'.$key))) {
-                // $delim = $this->config->get('str-tokens.token_split_character', ':');
-                //
-                // dd($this->entity->{$strTokenMethod}($this->entity, $attributes));
                 $replacements += $this->eloquentModelTokens($this->entity, $attributes, $key);
             }
 
