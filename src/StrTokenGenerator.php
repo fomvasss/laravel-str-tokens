@@ -269,9 +269,42 @@ class StrTokenGenerator
                 // TODO: make and check available model fields
                 $replacements[$original] = $eloquentModel->{$key};
             }
+
+            foreach ($this->config->get('str-tokens.formatters', []) as $formatterKey => $formatterFunc) {
+                $tokenFormattersStr = substr(strrchr($key, ':'), 1);
+                if (Str::contains($tokenFormattersStr, $formatterKey)) {
+                    $replacements[$original] = $this->callFormatter($formatterFunc, $replacements[$original]);
+                }
+            }
         }
 
         return $replacements;
+    }
+
+    /**
+     * @param $formatter
+     * @param $value
+     * @return string
+     * @throws \Exception
+     */
+    protected function callFormatter($formatter, $value)
+    {
+        if (is_callable($formatter)) {
+            return $formatter($value);
+        }
+
+        if (is_string($formatter) && class_exists($formatter)) {
+            $instance = app($formatter);
+            if (method_exists($instance, 'handle')) {
+                return $instance->handle($value);
+            }
+        }
+
+        if (is_string($formatter) && function_exists($formatter)) {
+            return $formatter($value);
+        }
+
+        throw new InvalidArgumentException("Formatter [$formatter] not supported.");
     }
 
     /**

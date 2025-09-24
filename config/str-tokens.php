@@ -50,5 +50,18 @@ return [
      | -----------------------------------------------------------------
      */
     // 'disable_model_tokens' => [],
-    
+
+    /* -----------------------------------------------------------------
+     |  Formatters result string
+     | -----------------------------------------------------------------
+     */
+    'formatters' => [
+        'trim' => 'trim',
+        'uppercase' => fn($v) => mb_strtoupper($v, 'UTF-8'),
+        'lowercase' => fn($v) => mb_strtolower($v, 'UTF-8'),
+        'urlLink' => \Fomvasss\LaravelStrTokens\Formatters\UrlLinkFormatter::class,
+        'clearHtml' => function  ($v) {
+            return strip_tags($v);
+        },
+    ],
 ];

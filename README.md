@@ -36,6 +36,8 @@ You can globally limit what model fields are allowed as tokens using `disable_mo
 
 You can also limit what tokens are exposed via individual models by creating a `strTokenWhitelist` or `strTokenBlacklist` function that returns an array of valid patterns
 
+For finesh prepare string - use `formatters` - methods an functions for modify string 
+
 ## Usage
 
 ```php
@@ -76,7 +78,7 @@ Given result:
  Price: $13
 ```
 
-You can use method `setEntities()` for set many Eloquent models, for example:
+Use method `setEntities()` for set many Eloquent models, for example:
 ```php
 <?php 
 $user1 = User::find(1);
@@ -100,8 +102,17 @@ $str = StrToken::setText('
 	*/
 ```
 
+#### Use formatters
+
+All formatters added after last symbol :
+```php
+ StrToken::setText('User: [user:name:uppercase], Email: [user:email:lovercase]')->setEntities(['user' => $user])->replace();
+```
+
+---
 **Not use together `setEntity` and `setEntities`!**
 **`setEntity` has haight priority!** 
+---
 
 #### Defining custom tokens in Eloquent models
 
@@ -113,7 +124,7 @@ In next example, we create custom methods: `strTokenTest()`, `strTokenCreatedAt(
 
 And now we can use next token in string: 
 ```
-This is [article:test], created at: [article:creted_at]
+This is [article:test], created: [article:cretedAt]
 ```
 And result:
 
