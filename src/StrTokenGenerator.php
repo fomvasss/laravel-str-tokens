@@ -267,7 +267,9 @@ class StrTokenGenerator
             // Is field model
             } else {
                 // TODO: make and check available model fields
-                $replacements[$original] = $eloquentModel->{$key};
+                //dd($eloquentModel->{$key});
+                $field = explode($delim, $key)[0];
+                $replacements[$original] = $eloquentModel->{$field};
             }
 
             foreach ($this->config->get('str-tokens.formatters', []) as $formatterKey => $formatterFunc) {

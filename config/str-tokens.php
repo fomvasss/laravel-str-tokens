@@ -56,12 +56,10 @@ return [
      | -----------------------------------------------------------------
      */
     'formatters' => [
-        'trim' => 'trim',
-        'uppercase' => fn($v) => mb_strtoupper($v, 'UTF-8'),
-        'lowercase' => fn($v) => mb_strtolower($v, 'UTF-8'),
+        'trim' => 'trim', // You can use any PHP function as formatter
+        'uppercase' => \Fomvasss\LaravelStrTokens\Formatters\UppercaseFormatter::class,
+        'lowercase' => \Fomvasss\LaravelStrTokens\Formatters\LoverrcaseFormatter::class,
         'urlLink' => \Fomvasss\LaravelStrTokens\Formatters\UrlLinkFormatter::class,
-        'clearHtml' => function  ($v) {
-            return strip_tags($v);
-        },
+        'clearHtml' => \Fomvasss\LaravelStrTokens\Formatters\ClearHtmlFormatter::class,
     ],
 ];
