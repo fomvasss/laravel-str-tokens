@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Fomvasss\LaravelStrTokens;
 
 class ServiceProvider extends \Illuminate\Support\ServiceProvider
