@@ -1,11 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Fomvasss\LaravelStrTokens;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 
 class StrTokenGenerator
 {
@@ -15,23 +18,26 @@ class StrTokenGenerator
     /** @var mixed The Laravel application configs. */
     protected $config;
 
-    /** @var string */
-    protected $text = '';
+    protected string $text = '';
 
-    /** @var null */
-    protected $date = null;
+    protected ?Carbon $date = null;
 
-    /** @var null */
-    protected $entity = null;
+    protected ?Model $entity = null;
 
-    /** @var array */
-    protected $entities = [];
+    // Коли true — replace() матчить $this->entity на будь-який $key групи токенів, а не лише
+    // на snake(class_basename($entity)). Виставляється лише внутрішньо, для рекурсивного виклику
+    // після traversal реального relation (eloquentModelTokens()), де $key — ім'я relation-методу,
+    // а не назва класу моделі, на яку він вказує (напр. lastChannel() -> Channel) — без цього
+    // прапорця такий вкладений токен мовчки резолвився б у порожній рядок
+    protected bool $entityMatchAnyKey = false;
 
-    /** @var array */
-    protected $vars = [];
+    /** @var array<string, Model> */
+    protected array $entities = [];
 
-    /** @var bool */
-    protected $clearEmptyTokens = true;
+    /** @var array<string, mixed> */
+    protected array $vars = [];
+
+    protected bool $clearEmptyTokens = true;
 
     /**
      * StrTokenGenerator constructor.
@@ -70,19 +76,21 @@ class StrTokenGenerator
 
     /**
      * @param Model $entity
+     * @param bool $matchAnyKey Внутрішній прапорець для рекурсії по relation — див. коментар біля $entityMatchAnyKey
      * @return StrTokenGenerator
      */
-    public function setEntity(Model $entity): self
+    public function setEntity(Model $entity, bool $matchAnyKey = false): self
     {
         $this->entity = $entity;
+        $this->entityMatchAnyKey = $matchAnyKey;
 
         return $this;
     }
 
     /**
-     * @param array $entities|Illuminate\Database\Eloquent\Model
+     * @param array<string, Model> $entities
      * @return \Fomvasss\LaravelStrTokens\StrTokenGenerator
-     * @throws \Exception
+     * @throws InvalidArgumentException
      */
     public function setEntities(array $entities): self
     {
@@ -161,7 +169,7 @@ class StrTokenGenerator
             } elseif ($key === 'var') {
                 $replacements += $this->varTokens($attributes);
 
-            } elseif ($this->entity && strtolower($key) === Str::snake(class_basename($this->entity))) {
+            } elseif ($this->entity && ($this->entityMatchAnyKey || strtolower($key) === Str::snake(class_basename($this->entity)))) {
                 $replacements += $this->eloquentModelTokens($this->entity, $attributes, $key);
 
             // For related taxonomy: https://github.com/fomvasss/laravel-simple-taxonomy
@@ -182,7 +190,19 @@ class StrTokenGenerator
         }
 
         $attributes = array_keys($replacements);
-        $values = array_values($replacements);
+        // Значення може бути non-scalar (JSON-cast колонка -> array, або Model, якщо
+        // can_traverse_relations=false і токен усе одно вказує на ім'я relation-методу) —
+        // без нормалізації str_replace() мовчки перетворив би такий елемент на літерал
+        // "Array" (PHP array-to-string coercion) або впав би TypeError. Stringable-об'єкти
+        // (напр. Carbon для [date:raw]) навмисно лишаються як є — str_replace() сам викличе
+        // їхній __toString()
+        $values = array_map(function ($value) {
+            if ($value === null || is_scalar($value) || (is_object($value) && method_exists($value, '__toString'))) {
+                return $value;
+            }
+
+            return '';
+        }, array_values($replacements));
 
         return str_replace($attributes, $values, $this->text);
     }
@@ -241,7 +261,7 @@ class StrTokenGenerator
 
         foreach ($tokens as $key => $original) {
             if(!empty($whitelist) && !Str::is($whitelist,$key)){ continue; }
-            if (Str::is($disable, $key)) { dump('nope'); continue; }
+            if (Str::is($disable, $key)) { continue; }
             $function = explode($delim, $key)[0];
             $strTokenMethod = Str::camel('str_token_'.$function);
 
@@ -254,27 +274,53 @@ class StrTokenGenerator
             } elseif ($canTraverseRelations && method_exists($eloquentModel, $function)) {
 
                 $newOriginal = str_replace($type.$delim, '', $original);
+                $value = $eloquentModel->{$function};
 
-                if ($eloquentModel->{$function} instanceof Model) {
+                if ($value instanceof Model) {
                     $tm = new static();
 
-                    $replacements[$original] = $tm->setText($newOriginal)->setEntity($eloquentModel->{$function})->replace();
-                } elseif ($eloquentModel->{$function} instanceof Collection && ($firstRelatedEntity = $eloquentModel->{$function}->first())) {
+                    // matchAnyKey: $newOriginal тут завжди рівно один токен (напр. "[lastChannel:name]"),
+                    // вирізаний із $key ($function === "lastChannel") — а не назва класу $value ("Channel").
+                    // Матчити по назві класу тут безглуздо, бо relation-метод майже завжди зветься не
+                    // так, як клас, на який він вказує
+                    $replacements[$original] = $tm->setText($newOriginal)->setEntity($value, true)->replace();
+                } elseif ($value instanceof Collection && ($firstRelatedEntity = $value->first())) {
                     $tm = new static();
 
-                    $replacements[$original] = $tm->setText($newOriginal)->setEntity($firstRelatedEntity)->replace();
+                    $replacements[$original] = $tm->setText($newOriginal)->setEntity($firstRelatedEntity, true)->replace();
+                } else {
+                    // $function exists as a method but isn't actually a relation returning a Model/Collection —
+                    // typically a Laravel 9+ attribute accessor (protected function name(): Attribute) sharing
+                    // its method name with the token key, which method_exists() can't tell apart from a real
+                    // relation method. Fall back to the plain-value read below instead of silently dropping
+                    // the token (previously: neither branch matched, $replacements[$original] was never set,
+                    // and the token quietly resolved to '' via clearEmptyTokens).
+                    $replacements[$original] = $value;
                 }
             // Is field model
             } else {
                 // TODO: make and check available model fields
                 //dd($eloquentModel->{$key});
                 $field = explode($delim, $key)[0];
-                $replacements[$original] = $eloquentModel->{$field};
+                $value = $eloquentModel->{$field};
+
+                // Сюди потрапляє і токен, що називає relation, коли can_traverse_relations=false
+                // (Eloquent сам резолвить relation через магічний __get незалежно від прапорця) —
+                // без guard'а Model/Collection просочується у фінальний replace() і серіалізується
+                // в JSON через Model::__toString(), замість очікуваного порожнього рядка
+                $replacements[$original] = ($value instanceof Model || $value instanceof Collection) ? '' : $value;
             }
 
-            foreach ($this->config->get('str-tokens.formatters', []) as $formatterKey => $formatterFunc) {
-                $tokenFormattersStr = substr(strrchr($key, ':'), 1);
-                if (Str::contains($tokenFormattersStr, $formatterKey)) {
+            // Формат — рівно один формате: [type:field:formatterName] ("All formatters added
+            // after last symbol :" в README). Порівняння точне ($tail === $formatterKey), не
+            // Str::contains — інакше формате міг спрацювати на полі, чия назва просто МІСТИТЬ
+            // ім'я формате підрядком (напр. поле "fullname" і formatter "name": "fullname"
+            // містить "name" підрядком), або кілька схожих формате спрацьовували б одночасно
+            $tail = strrchr($key, ':');
+            if ($tail !== false) {
+                $tail = substr($tail, 1);
+                $formatterFunc = $this->config->get("str-tokens.formatters.{$tail}");
+                if ($formatterFunc !== null) {
                     $replacements[$original] = $this->callFormatter($formatterFunc, $replacements[$original]);
                 }
             }
@@ -291,6 +337,13 @@ class StrTokenGenerator
      */
     protected function callFormatter($formatter, $value)
     {
+        // Значення поля моделі може бути int/bool/float (звичайна нетекстова колонка) —
+        // раніше (без strict_types) PHP мовчки коерсив це в string на вході в handle(string|null).
+        // Явний cast зберігає ту саму поведінку тепер, коли автокоерсія вимкнена
+        if ($value !== null && !is_string($value) && is_scalar($value)) {
+            $value = (string) $value;
+        }
+
         if (is_callable($formatter)) {
             return $formatter($value);
         }
@@ -367,13 +420,13 @@ class StrTokenGenerator
     }
 
     /**
-     * @param $entity
-     * @throws \Exception
+     * @param mixed $entity
+     * @throws InvalidArgumentException
      */
-    protected function ensureValidEntity($entity)
+    protected function ensureValidEntity($entity): void
     {
         if (! $entity instanceof Model) {
-            throw new \Exception("StrToken Entity must by instance of '" . Model::class . "'. Current instance of '" . gettype($entity) . "'");
+            throw new InvalidArgumentException("StrToken Entity must by instance of '" . Model::class . "'. Current instance of '" . gettype($entity) . "'");
         }
     }
 }

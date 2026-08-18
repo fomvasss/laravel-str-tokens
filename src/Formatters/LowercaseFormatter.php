@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Fomvasss\LaravelStrTokens\Formatters;
 
-class ClearHtmlFormatter
+class LowercaseFormatter
 {
     public function handle(string|null $str): string
     {
@@ -13,6 +13,6 @@ class ClearHtmlFormatter
             return '';
         }
 
-        return strip_tags($str);
+        return mb_strtolower($str, 'UTF-8');
     }
 }

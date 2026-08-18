@@ -58,7 +58,7 @@ return [
     'formatters' => [
         'trim' => 'trim', // You can use any PHP function as formatter
         'uppercase' => \Fomvasss\LaravelStrTokens\Formatters\UppercaseFormatter::class,
-        'lowercase' => \Fomvasss\LaravelStrTokens\Formatters\LoverrcaseFormatter::class,
+        'lowercase' => \Fomvasss\LaravelStrTokens\Formatters\LowercaseFormatter::class,
         'urlLink' => \Fomvasss\LaravelStrTokens\Formatters\UrlLinkFormatter::class,
         'clearHtml' => \Fomvasss\LaravelStrTokens\Formatters\ClearHtmlFormatter::class,
     ],
